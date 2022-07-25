@@ -144,7 +144,7 @@ function TeamSelect({
             <DropdownButton
               aria-label={t('Add Team')}
               isOpen={isOpen}
-              size="xsmall"
+              size="xs"
               disabled={disabled}
             >
               {t('Add Team')}
@@ -205,7 +205,7 @@ const TeamRow = ({
 
       <div>
         <Button
-          size="xsmall"
+          size="xs"
           icon={<IconSubtract isCircled size="xs" />}
           disabled={disabled}
           onClick={() => onRemove(team.slug)}
