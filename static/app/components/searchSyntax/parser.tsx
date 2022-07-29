@@ -706,10 +706,15 @@ type KVTokens = Converter & `token${'Key' | 'Value'}${string}`;
  */
 type KVConverter<T extends Token> = ConverterResultMap[KVTokens] & {type: T};
 
+type TokenToConverterName<T extends Token> = `token${Capitalize<T>}`;
+
 /**
- * Each token type is discriminated by the `type` field.
+ * Maps a Token enum to the proper token result defined in TokenConverter.
+ * e.g. => Token.LogicBoolean => ReturnType<TokenConverter['tokenLogicBoolean']>
  */
-export type TokenResult<T extends Token> = ConverterResultMap[Converter] & {type: T};
+export type TokenResult<T extends Token> = TokenToConverterName<T> extends Converter
+  ? ConverterResultMap[TokenToConverterName<T>]
+  : never;
 
 /**
  * Result from parsing a search query.

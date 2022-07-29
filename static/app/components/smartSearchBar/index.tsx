@@ -804,7 +804,7 @@ class SmartSearchBar extends Component<Props, State> {
       return true;
     }
 
-    return treeResultLocator<boolean>({
+    return treeResultLocator({
       tree: parsedQuery,
       noResultValue: true,
       visitorTest: ({token, returnResult, skipToken}) =>
@@ -820,16 +820,14 @@ class SmartSearchBar extends Component<Props, State> {
    * Get the active filter or free text actively focused.
    */
   get cursorToken() {
-    const matchedTokens = [Token.Filter, Token.FreeText] as const;
-    return this.findTokensAtCursor(matchedTokens);
+    return this.findTokensAtCursor(Token.Filter, Token.FreeText);
   }
 
   /**
    * Get the active parsed text value
    */
   get cursorValue() {
-    const matchedTokens = [Token.ValueText] as const;
-    return this.findTokensAtCursor(matchedTokens);
+    return this.findTokensAtCursor(Token.ValueText);
   }
 
   /**
@@ -899,7 +897,7 @@ class SmartSearchBar extends Component<Props, State> {
    * Finds tokens that exist at the current cursor position
    * @param matchedTokens acceptable list of tokens
    */
-  findTokensAtCursor<T extends readonly Token[]>(matchedTokens: T) {
+  findTokensAtCursor<T extends readonly Token[]>(...matchedTokens: T) {
     const {parsedQuery} = this.state;
 
     if (parsedQuery === null) {
@@ -908,15 +906,26 @@ class SmartSearchBar extends Component<Props, State> {
 
     const cursor = this.cursorPosition;
 
+    const isMatchedToken = (
+      token: TokenResult<Token>
+    ): token is TokenResult<T[number]> => {
+      return matchedTokens.includes(token.type);
+    };
+
     return treeResultLocator<TokenResult<T[number]> | null>({
       tree: parsedQuery,
       noResultValue: null,
-      visitorTest: ({token, returnResult, skipToken}) =>
-        !matchedTokens.includes(token.type)
-          ? null
-          : isWithinToken(token, cursor)
-          ? returnResult(token)
-          : skipToken,
+      visitorTest: ({token, returnResult, skipToken}) => {
+        if (!isMatchedToken(token)) {
+          return null;
+        }
+
+        if (isWithinToken(token, cursor)) {
+          return returnResult(token);
+        }
+
+        return skipToken;
+      },
     });
   }
 

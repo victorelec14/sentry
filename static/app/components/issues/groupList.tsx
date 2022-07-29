@@ -130,7 +130,7 @@ class GroupList extends Component<Props, State> {
 
     const parsedQuery = parseSearch((queryParams ?? this.getQueryParams()).query);
     const hasLogicBoolean = parsedQuery
-      ? treeResultLocator<boolean>({
+      ? treeResultLocator({
           tree: parsedQuery,
           noResultValue: false,
           visitorTest: ({token, returnResult}) => {
