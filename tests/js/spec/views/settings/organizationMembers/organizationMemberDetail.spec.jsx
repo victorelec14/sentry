@@ -27,20 +27,38 @@ describe('OrganizationMemberDetail', function () {
     roles: TestStubs.OrgRoleList(),
     dateCreated: new Date(),
     teams: [team.slug],
+    teamRoles: [
+      {
+        teamSlug: team.slug,
+        role: null,
+      },
+    ],
   });
   const pendingMember = TestStubs.Member({
     id: 2,
     roles: TestStubs.OrgRoleList(),
     dateCreated: new Date(),
     teams: [team.slug],
+    teamRoles: [
+      {
+        teamSlug: team.slug,
+        role: null,
+      },
+    ],
     invite_link: 'http://example.com/i/abc123',
     pending: true,
   });
   const expiredMember = TestStubs.Member({
     id: 3,
-    roles: TestStubs.OrgRoleList(),
     dateCreated: new Date(),
+    roles: TestStubs.OrgRoleList(),
     teams: [team.slug],
+    teamRoles: [
+      {
+        teamSlug: team.slug,
+        role: null,
+      },
+    ],
     invite_link: 'http://example.com/i/abc123',
     pending: true,
     expired: true,
@@ -97,6 +115,7 @@ describe('OrganizationMemberDetail', function () {
         expect.objectContaining({
           data: expect.objectContaining({
             role: 'owner',
+            orgRole: 'owner',
           }),
         })
       );

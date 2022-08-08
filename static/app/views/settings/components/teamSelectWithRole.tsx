@@ -25,8 +25,6 @@ import {
 } from 'sentry/views/settings/organizationTeams/roleOverwriteWarning';
 
 type Props = {
-  member: Member;
-
   /**
    * callback when teams are added
    */
@@ -57,7 +55,6 @@ type Props = {
 };
 
 function TeamSelect({
-  member,
   orgRole,
   teamRoles,
   onAddTeam,
@@ -67,7 +64,8 @@ function TeamSelect({
   loadingTeams,
 }: Props) {
   const {teams, onSearch, fetching} = useTeams();
-  const {orgRoleList, teamRoleList} = member;
+  const organization = useOrganization();
+  const {orgRoleList, teamRoleList} = organization;
 
   const handleAddTeam = (option: Item) => {
     const team = teams.find(tm => tm.slug === option.value);
@@ -114,8 +112,8 @@ function TeamSelect({
   };
 
   // Only show options that aren't selected in the dropdown
-  const teamRoleslugs = teamRoles.map(r => r.teamSlug);
-  const remainingTeams = teams.filter(tm => !teamRoleslugs.includes(tm.slug));
+  const teamRoleSlugs = teamRoles.map(r => r.teamSlug);
+  const remainingTeams = teams.filter(tm => !teamRoleSlugs.includes(tm.slug));
   const options = remainingTeams.map((team, index) => ({
     index,
     value: team.slug,

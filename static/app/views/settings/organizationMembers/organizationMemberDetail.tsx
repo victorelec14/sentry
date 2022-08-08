@@ -266,7 +266,7 @@ class OrganizationMemberDetail extends AsyncView<Props, State> {
       return <NotFound />;
     }
 
-    const {access, features} = organization;
+    const {access, features, orgRoleList} = organization;
     const canEdit = access.includes('org:write') && !this.memberDeactivated;
     const hasTeamRoles = features.includes('team-roles');
 
@@ -383,7 +383,7 @@ class OrganizationMemberDetail extends AsyncView<Props, State> {
           enforceAllowed={false}
           enforceRetired={hasTeamRoles}
           disabled={!canEdit}
-          roleList={member.orgRoleList}
+          roleList={orgRoleList}
           roleSelected={orgRole}
           setSelected={this.onChangeOrgRole}
         />
@@ -393,7 +393,6 @@ class OrganizationMemberDetail extends AsyncView<Props, State> {
             <TeamSelectWithRole
               loadingTeams={!initiallyLoaded}
               disabled={!canEdit}
-              member={member}
               orgRole={orgRole}
               teamRoles={teamRoles}
               onAddTeam={this.onAddTeam}
