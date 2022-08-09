@@ -344,6 +344,7 @@ function Flamegraph(props: FlamegraphProps): ReactElement {
           <FrameStack
             referenceNode={referenceNode}
             rootNodes={rootNodes}
+            flamegraph={flamegraph}
             getFrameColor={getFrameColor}
             formatDuration={flamegraph ? flamegraph.formatter : noopFormatDuration}
             canvasPoolManager={canvasPoolManager}
