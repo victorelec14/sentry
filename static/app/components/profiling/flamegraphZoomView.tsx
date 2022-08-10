@@ -750,6 +750,7 @@ function FlamegraphZoomView({
         />
         <FlamegraphOptionsContextMenu
           contextMenu={contextMenu}
+          hoveredNode={hoveredNodeOnContextMenuOpen.current}
           isHighlightingAllOccurences={highlightingAllOccurences}
           onHighlightAllOccurencesClick={handleHighlightAllFramesClick}
         />
