@@ -26,6 +26,8 @@ import {SelectedFrameRenderer} from 'sentry/utils/profiling/renderers/selectedFr
 import {TextRenderer} from 'sentry/utils/profiling/renderers/textRenderer';
 import usePrevious from 'sentry/utils/usePrevious';
 
+import {useFlamegraphProfiles} from '../../utils/profiling/flamegraph/useFlamegraphProfiles';
+
 import {BoundTooltip} from './boundTooltip';
 import {FlamegraphOptionsContextMenu} from './flamegraphOptionsContextMenu';
 
@@ -72,6 +74,7 @@ function FlamegraphZoomView({
   setFlamegraphOverlayCanvasRef,
 }: FlamegraphZoomViewProps): React.ReactElement {
   const flamegraphTheme = useFlamegraphTheme();
+  const [flamegraphProfiles] = useFlamegraphProfiles();
   const [flamegraphSearch] = useFlamegraphSearch();
   const isInternalFlamegraphDebugModeEnabled = useInternalFlamegraphDebugMode();
 
@@ -318,6 +321,16 @@ function FlamegraphZoomView({
 
   const selectedFramesRef = useRef<FlamegraphFrame[] | null>(null);
   useEffect(() => {
+    if (flamegraphProfiles.highlightFrame) {
+      selectedFramesRef.current = flamegraph.findAllMatchingFrames(
+        flamegraphProfiles.highlightFrame.name,
+        flamegraphProfiles.highlightFrame.package
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flamegraphProfiles.highlightFrame, flamegraph]);
+
+  useEffect(() => {
     if (!flamegraphCanvas || !flamegraphView || !selectedFrameRenderer) {
       return undefined;
     }
@@ -356,10 +369,13 @@ function FlamegraphZoomView({
       scheduler.unregisterAfterFrameCallback(drawSelectedFrameBorder);
     };
   }, [
+    flamegraphProfiles.highlightFrame,
     flamegraphView,
     flamegraphCanvas,
     scheduler,
+    flamegraph,
     selectedFrameRenderer,
+    flamegraphProfiles,
     flamegraphTheme,
   ]);
 
