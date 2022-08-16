@@ -27,10 +27,6 @@ export function useProjectSdkUpdates(
   });
 
   useEffect(() => {
-    if (options.projectId === undefined) {
-      return undefined;
-    }
-
     let unmounted = false;
 
     loadSdkUpdates(api, options.organization.slug).then(data => {
