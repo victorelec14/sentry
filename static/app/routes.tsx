@@ -14,6 +14,7 @@ import {EXPERIMENTAL_SPA} from 'sentry/constants';
 import {t} from 'sentry/locale';
 import HookStore from 'sentry/stores/hookStore';
 import {HookName} from 'sentry/types/hooks';
+import customerDomainOrgRoute from 'sentry/utils/customerDomainOrgRoute';
 import errorHandler from 'sentry/utils/errorHandler';
 import App from 'sentry/views/app';
 import AuthLayout from 'sentry/views/auth/layout';
@@ -1243,6 +1244,19 @@ function buildRoutes() {
     </Route>
   );
 
+  const issueListCustomerDomainRoutes = (
+    <Route
+      path="/issues/"
+      component={errorHandler(customerDomainOrgRoute(IssueListContainer))}
+    >
+      <IndexRoute component={errorHandler(customerDomainOrgRoute(IssueListOverview))} />
+      <Route
+        path="searches/:searchId/"
+        component={errorHandler(customerDomainOrgRoute(IssueListOverview))}
+      />
+    </Route>
+  );
+
   // Once org issues is complete, these routes can be nested under
   // /organizations/:orgId/issues
   const issueDetailsRoutes = (
@@ -1742,6 +1756,12 @@ function buildRoutes() {
     </Route>
   );
 
+  const customerDomainorganizationRoutes = (
+    <Route component={errorHandler(customerDomainOrgRoute(OrganizationDetails))}>
+      {issueListCustomerDomainRoutes}
+    </Route>
+  );
+
   const legacyRedirectRoutes = (
     <Route path="/:orgId/">
       <IndexRedirect to="/organizations/:orgId/" />
@@ -1880,6 +1900,7 @@ function buildRoutes() {
       {experimentalSpaRoutes}
       <Route path="/" component={errorHandler(App)}>
         {rootRoutes}
+        {customerDomainorganizationRoutes}
         {organizationRoutes}
         {legacyRedirectRoutes}
         {hook('routes')}
