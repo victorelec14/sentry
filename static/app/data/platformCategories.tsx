@@ -42,6 +42,7 @@ export const frontend = [
   'javascript-vue',
   'javascript-nextjs',
   'javascript-remix',
+  'javascript-svelte',
   'unity',
 ] as const;
 
@@ -214,6 +215,7 @@ export const releaseHealth: PlatformKey[] = [
   'javascript-vue',
   'javascript-nextjs',
   'javascript-remix',
+  'javascript-svelte',
   // mobile
   'android',
   'apple-ios',
