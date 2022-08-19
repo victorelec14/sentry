@@ -1912,7 +1912,7 @@ def _get_or_create_performance_group(jobs, projects):
         # FEATURE FLAG RANDOMIZER
         # check options to see if we should be creating performance issues for this org
         rate = options.get("incidents-performance.rollout-rate")
-        if (rate and rate > random.random()) or True:
+        if rate and rate > random.random():
 
             kwargs = {
                 "platform": job["platform"],
