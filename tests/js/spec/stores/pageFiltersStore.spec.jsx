@@ -17,7 +17,6 @@ describe('PageFiltersStore', function () {
   });
   afterEach(function () {
     PageFiltersStore.reset();
-    PageFiltersStore.teardown();
   });
 
   it('getState()', function () {
