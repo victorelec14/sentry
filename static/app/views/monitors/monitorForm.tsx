@@ -3,7 +3,7 @@ import {Observer} from 'mobx-react';
 
 import Access from 'sentry/components/acl/access';
 import Field from 'sentry/components/forms/field';
-import Form from 'sentry/components/forms/form';
+import Form, {FormProps} from 'sentry/components/forms/form';
 import NumberField from 'sentry/components/forms/numberField';
 import SelectField from 'sentry/components/forms/selectField';
 import TextCopyInput from 'sentry/components/forms/textCopyInput';
@@ -37,8 +37,8 @@ const INTERVALS: SelectValue<string>[] = [
 
 type Props = {
   apiEndpoint: string;
-  apiMethod: Form['props']['apiMethod'];
-  onSubmitSuccess: Form['props']['onSubmitSuccess'];
+  apiMethod: FormProps['apiMethod'];
+  onSubmitSuccess: FormProps['onSubmitSuccess'];
   projects: Project[];
   selection: PageFilters;
   monitor?: Monitor;

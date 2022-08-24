@@ -2,7 +2,7 @@ import {Component} from 'react';
 import pick from 'lodash/pick';
 
 import {FieldFromConfig} from 'sentry/components/forms';
-import Form from 'sentry/components/forms/form';
+import Form, {FormProps} from 'sentry/components/forms/form';
 import {Field} from 'sentry/components/forms/type';
 import {t} from 'sentry/locale';
 import {
@@ -19,8 +19,8 @@ import {
 
 type Props = {
   integration: Integration;
-  onCancel: Form['props']['onCancel'];
-  onSubmitSuccess: Form['props']['onSubmitSuccess'];
+  onCancel: FormProps['onCancel'];
+  onSubmitSuccess: FormProps['onSubmitSuccess'];
   organization: Organization;
   projects: Project[];
   repos: Repository[];
