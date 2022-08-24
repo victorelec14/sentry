@@ -2,7 +2,7 @@ import {css} from '@emotion/react';
 import styled from '@emotion/styled';
 import findKey from 'lodash/findKey';
 
-import FormField from 'sentry/components/forms/formField';
+import FormField, {FormFieldProps} from 'sentry/components/forms/formField';
 import SelectControl from 'sentry/components/forms/selectControl';
 import {t} from 'sentry/locale';
 import space from 'sentry/styles/space';
@@ -49,7 +49,7 @@ type WizardAggregateFieldValue = {
 
 type MenuOption = {label: string; value: AlertType};
 
-type Props = Omit<FormField['props'], 'children'> & {
+type Props = Omit<FormFieldProps, 'children'> & {
   organization: Organization;
   alertType?: AlertType;
   /**
