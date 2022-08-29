@@ -10,7 +10,7 @@ import {IconEllipsis} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import GroupStore from 'sentry/stores/groupStore';
 import space from 'sentry/styles/space';
-import {Organization, Project, ResolutionStatus} from 'sentry/types';
+import {EventOrGroupType, Organization, Project, ResolutionStatus} from 'sentry/types';
 import Projects from 'sentry/utils/projects';
 import useMedia from 'sentry/utils/useMedia';
 
@@ -56,13 +56,21 @@ function ActionSet({
   const confirm = getConfirm(numIssues, allInQuerySelected, query, queryCount);
   const label = getLabel(numIssues, allInQuerySelected);
 
-  // merges require a single project to be active in an org context
-  // selectedProjectSlug is null when 0 or >1 projects are selected.
-  const mergeDisabled = !(multiSelected && selectedProjectSlug);
-
   const selectedIssues = [...issues].map(GroupStore.get);
+
+  const performanceIssueSelected = selectedIssues.some(
+    issue => issue?.type === EventOrGroupType.PERFORMANCE
+  );
+
+  // Merges require multiple issues of a single project type
+  // Performance issues are not yet supported
+  const mergeDisabled =
+    !(multiSelected && selectedProjectSlug) || performanceIssueSelected;
+
   const canMarkReviewed =
-    anySelected && (allInQuerySelected || selectedIssues.some(issue => !!issue?.inbox));
+    anySelected &&
+    !performanceIssueSelected &&
+    (allInQuerySelected || selectedIssues.some(issue => !!issue?.inbox));
 
   // determine which ... dropdown options to show based on issue(s) selected
   const canAddBookmark =
@@ -71,6 +79,7 @@ function ActionSet({
     allInQuerySelected || selectedIssues.some(issue => issue?.isBookmarked);
   const canSetUnresolved =
     allInQuerySelected || selectedIssues.some(issue => issue?.status === 'resolved');
+  const canDelete = !performanceIssueSelected;
 
   // Determine whether to nest "Merge" and "Mark as Reviewed" buttons inside
   // the dropdown menu based on the current screen size
@@ -155,6 +164,7 @@ function ActionSet({
   const disabledMenuItems = [
     ...(mergeDisabled ? ['merge'] : []),
     ...(canMarkReviewed ? [] : ['mark-reviewed']),
+    ...(canDelete ? [] : ['delete']),
   ];
 
   return (
