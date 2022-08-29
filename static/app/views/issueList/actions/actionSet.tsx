@@ -58,19 +58,17 @@ function ActionSet({
 
   const selectedIssues = [...issues].map(GroupStore.get);
 
+  // Merges require multiple issues of a single project type
+  // Performance issues are not yet supported
   const performanceIssueSelected = selectedIssues.some(
     issue => issue?.type === EventOrGroupType.PERFORMANCE
   );
-
-  // Merges require multiple issues of a single project type
-  // Performance issues are not yet supported
+  const multipleIssueProjectsSelected = multiSelected && !selectedProjectSlug;
   const mergeDisabled =
-    !(multiSelected && selectedProjectSlug) || performanceIssueSelected;
+    !multiSelected || multipleIssueProjectsSelected || performanceIssueSelected;
 
   const canMarkReviewed =
-    anySelected &&
-    !performanceIssueSelected &&
-    (allInQuerySelected || selectedIssues.some(issue => !!issue?.inbox));
+    anySelected && (allInQuerySelected || selectedIssues.some(issue => !!issue?.inbox));
 
   // determine which ... dropdown options to show based on issue(s) selected
   const canAddBookmark =
@@ -80,6 +78,18 @@ function ActionSet({
   const canSetUnresolved =
     allInQuerySelected || selectedIssues.some(issue => issue?.status === 'resolved');
   const canDelete = !performanceIssueSelected;
+
+  const makeMergeTooltip = () => {
+    if (performanceIssueSelected) {
+      return t('Merging performance issues is not supported');
+    }
+
+    if (multipleIssueProjectsSelected) {
+      return t('Cannot merge issues from different projects');
+    }
+
+    return '';
+  };
 
   // Determine whether to nest "Merge" and "Mark as Reviewed" buttons inside
   // the dropdown menu based on the current screen size
@@ -91,6 +101,8 @@ function ActionSet({
       key: 'merge',
       label: t('Merge'),
       hidden: !nestMergeAndReview,
+      disabled: mergeDisabled,
+      tooltip: makeMergeTooltip(),
       onAction: () => {
         openConfirmModal({
           bypass: !onShouldConfirm(ConfirmAction.MERGE),
@@ -104,6 +116,7 @@ function ActionSet({
       key: 'mark-reviewed',
       label: t('Mark Reviewed'),
       hidden: !nestMergeAndReview,
+      disabled: !canMarkReviewed,
       onAction: () => onUpdate({inbox: false}),
     },
     {
@@ -149,6 +162,10 @@ function ActionSet({
       key: 'delete',
       label: t('Delete'),
       priority: 'danger',
+      disabled: !canDelete,
+      tooltip: performanceIssueSelected
+        ? 'Deleting is not yet supported for performance issues'
+        : null,
       onAction: () => {
         openConfirmModal({
           bypass: !onShouldConfirm(ConfirmAction.DELETE),
@@ -159,12 +176,6 @@ function ActionSet({
         });
       },
     },
-  ];
-
-  const disabledMenuItems = [
-    ...(mergeDisabled ? ['merge'] : []),
-    ...(canMarkReviewed ? [] : ['mark-reviewed']),
-    ...(canDelete ? [] : ['delete']),
   ];
 
   return (
@@ -230,7 +241,7 @@ function ActionSet({
           shouldConfirm={onShouldConfirm(ConfirmAction.MERGE)}
           message={confirm(ConfirmAction.MERGE, false)}
           confirmLabel={label('merge')}
-          title={t('Merge Selected Issues')}
+          title={makeMergeTooltip()}
         >
           {t('Merge')}
         </ActionLink>
@@ -244,7 +255,7 @@ function ActionSet({
           showChevron: false,
           size: 'xs',
         }}
-        disabledKeys={disabledMenuItems}
+        disabledKeys={menuItems.filter(item => item.disabled).map(item => item.key)}
         isDisabled={!anySelected}
       />
       <IssueListSortOptions sort={sort} query={query} onSelect={onSortChange} />

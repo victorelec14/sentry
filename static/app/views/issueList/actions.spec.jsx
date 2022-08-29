@@ -253,7 +253,7 @@ describe('IssueListActions', function () {
 
     // Can resolve but not merge issues from multiple projects
     expect(screen.getByRole('button', {name: 'Resolve'})).toBeEnabled();
-    expect(screen.getByRole('button', {name: 'Merge Selected Issues'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Merge'})).toBeDisabled();
   });
 
   describe('mark reviewed', function () {
