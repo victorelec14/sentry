@@ -147,7 +147,7 @@ def _detect_performance_problems(data: Event, sdk_span: Any) -> List[Performance
     }
 
     # Create performance issues for duplicate spans first
-    used_perf_issue_detectors = {DetectorType.DUPLICATE_SPANS_HASH}
+    used_perf_issue_detectors = {DetectorType.DUPLICATE_SPANS_HASH, DetectorType.DUPLICATE_SPANS}
 
     for span in spans:
         for _, detector in detectors.items():
@@ -196,9 +196,11 @@ def prepare_problem_for_grouping(
 
 
 def fingerprint_group(transaction_name, span_op, hash, problem_class):
-    signature = (str(transaction_name) + str(span_op) + str(hash)).encode("utf-8")
+    signature = (str(transaction_name) + str(span_op) + str(hash) + str(problem_class)).encode(
+        "utf-8"
+    )
     full_fingerprint = hashlib.sha1(signature).hexdigest()
-    return f"1-{problem_class}-{full_fingerprint}"
+    return full_fingerprint
 
 
 # Creates a stable fingerprint given the same span details using sha1.

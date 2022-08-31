@@ -2016,16 +2016,13 @@ def save_transaction_events(jobs, projects):
             job["is_new_group_environment"] = False
 
     _pull_out_data(jobs, projects)
-
-    # NEW CODEPATH HERE
-    _save_aggregate_performance(jobs, projects)
-
     _get_or_create_release_many(jobs, projects)
     _get_event_user_many(jobs, projects)
     _derive_plugin_tags_many(jobs, projects)
     _derive_interface_tags_many(jobs)
     _calculate_span_grouping(jobs, projects)
     _detect_performance_problems(jobs, projects)
+    _save_aggregate_performance(jobs, projects)
     _materialize_metadata_many(jobs)
     _get_or_create_environment_many(jobs, projects)
     _get_or_create_group_environment_many(jobs, projects)
