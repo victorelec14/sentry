@@ -16,6 +16,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, OperationalError, connection, transaction
 from django.db.models import Func
 from django.utils.encoding import force_text
+from pyparsing import Optional
 from pytz import UTC
 
 from sentry import (
@@ -355,7 +356,7 @@ class EventManager:
         if self._data.get("type") == "transaction":
             self._data["project"] = int(project_id)
             job = {"data": self._data, "start_time": start_time}
-            jobs = save_transaction_events([job], projects)
+            jobs = save_transaction_events([job], projects, raw)
 
             if not project.flags.has_transactions and not skip_send_first_transaction:
                 first_transaction_received.send_robust(
@@ -874,14 +875,13 @@ def _get_or_create_environment_many(jobs, projects):
 @metrics.wraps("save_event.get_or_create_group_environment_many")
 def _get_or_create_group_environment_many(jobs, projects):
     for job in jobs:
-        if job["group"]:
-            group_environment, job["is_new_group_environment"] = GroupEnvironment.get_or_create(
-                group_id=job["group"].id,
-                environment_id=job["environment"].id,
-                defaults={"first_release": job["release"] or None},
-            )
-        else:
-            job["is_new_group_environment"] = False
+        if job["groups"]:
+            for group_info in job["groups"]:
+                (_, group_info.is_new_group_environment,) = GroupEnvironment.get_or_create(
+                    group_id=group_info.group.id,
+                    environment_id=job["environment"].id,
+                    defaults={"first_release": job["release"] or None},
+                )
 
 
 @metrics.wraps("save_event.get_or_create_release_associated_models")
@@ -910,13 +910,70 @@ def _get_or_create_release_associated_models(jobs, projects):
 @metrics.wraps("save_event.get_or_create_group_release_many")
 def _get_or_create_group_release_many(jobs, projects):
     for job in jobs:
-        if job["release"] and job["group"]:
-            job["grouprelease"] = GroupRelease.get_or_create(
-                group=job["group"],
-                release=job["release"],
-                environment=job["environment"],
-                datetime=job["event"].datetime,
+        if job["release"]:
+            for groupInfo in jobs["group"]:
+                groupInfo.grouprelease = GroupRelease.get_or_create(
+                    group=groupInfo.group,
+                    release=job["release"],
+                    environment=job["environment"],
+                    datetime=job["event"].datetime,
+                )
+
+
+@metrics.wraps("save_event.tsdb_record_all_metrics_performance")
+def _tsdb_record_all_metrics_performance(jobs):
+    """
+    Do all tsdb-related things for save_event in here s.t. we can potentially
+    put everything in a single redis pipeline someday.
+    """
+
+    # XXX: validate whether anybody actually uses those metrics
+
+    for job in jobs:
+        incrs = []
+        frequencies = []
+        records = []
+
+        incrs.append((tsdb.models.project, job["project_id"]))
+        event = job["event"]
+        group = job["group"]
+        release = job["release"]
+        environment = job["environment"]
+
+        if group:
+            incrs.append((tsdb.models.group, group.id))
+            frequencies.append(
+                (tsdb.models.frequent_environments_by_group, {group.id: {environment.id: 1}})
             )
+
+            if release:
+                frequencies.append(
+                    (
+                        tsdb.models.frequent_releases_by_group,
+                        {group.id: {job["grouprelease"].id: 1}},
+                    )
+                )
+
+        if release:
+            incrs.append((tsdb.models.release, release.id))
+
+        user = job["user"]
+
+        if user:
+            project_id = job["project_id"]
+            records.append((tsdb.models.users_affected_by_project, project_id, (user.tag_value,)))
+
+            if group:
+                records.append((tsdb.models.users_affected_by_group, group.id, (user.tag_value,)))
+
+        if incrs:
+            tsdb.incr_multi(incrs, timestamp=event.datetime, environment_id=environment.id)
+
+        if records:
+            tsdb.record_multi(records, timestamp=event.datetime, environment_id=environment.id)
+
+        if frequencies:
+            tsdb.record_frequency_multi(frequencies, timestamp=event.datetime)
 
 
 @metrics.wraps("save_event.tsdb_record_all_metrics")
@@ -982,6 +1039,7 @@ def _nodestore_save_many(jobs):
         # Write the event to Nodestore
         subkeys = {}
 
+        # TODO check if we need to pass job["groups"] here for perf groups
         if job["group"]:
             event = job["event"]
             unprocessed = event_processing_store.get(
@@ -1915,6 +1973,8 @@ class GroupInfo:
     group: Group
     is_new: bool
     is_regression: bool
+    grouprelease: GroupRelease
+    is_new_group_environment: Optional[bool] = None
 
 
 class Performance_Job(TypedDict, total=False):
@@ -2012,7 +2072,7 @@ def _save_aggregate_performance(jobs: Sequence[Performance_Job], projects):
 
 
 @metrics.wraps("event_manager.save_transaction_events")
-def save_transaction_events(jobs, projects):
+def save_transaction_events(jobs, projects, raw=False):
     with metrics.timer("event_manager.save_transactions.collect_organization_ids"):
         organization_ids = {project.organization_id for project in projects.values()}
 
@@ -2033,11 +2093,7 @@ def save_transaction_events(jobs, projects):
     with metrics.timer("event_manager.save_transactions.prepare_jobs"):
         for job in jobs:
             job["project_id"] = job["data"]["project"]
-            job["raw"] = False
-            job["group"] = None
-            job["is_new"] = False
-            job["is_regression"] = False
-            job["is_new_group_environment"] = False
+            job["raw"] = raw
 
     _pull_out_data(jobs, projects)
     _get_or_create_release_many(jobs, projects)
@@ -2052,7 +2108,7 @@ def save_transaction_events(jobs, projects):
     _get_or_create_group_environment_many(jobs, projects)
     _get_or_create_release_associated_models(jobs, projects)
     _get_or_create_group_release_many(jobs, projects)
-    _tsdb_record_all_metrics(jobs)
+    _tsdb_record_all_metrics_performance(jobs)
     _materialize_event_metrics(jobs)
     _nodestore_save_many(jobs)
     _eventstream_insert_many(jobs)
