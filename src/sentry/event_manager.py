@@ -1914,6 +1914,8 @@ def _save_aggregate_performance(jobs, projects):
     for job in jobs[:MAX_GROUPS]:
         # FEATURE FLAG RANDOMIZER
         # check options to see if we should be creating performance issues for this org
+
+        # TODO create a new flag, this one already exists and is set to 100
         rate = options.get("incidents-performance.rollout-rate")
         if rate and rate > random.random():
 
