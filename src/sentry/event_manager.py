@@ -93,7 +93,10 @@ from sentry.utils.cache import cache_key_for_event
 from sentry.utils.canonical import CanonicalKeyDict
 from sentry.utils.dates import to_datetime, to_timestamp
 from sentry.utils.outcomes import Outcome, track_outcome
-from sentry.utils.performance_issues.performance_detection import detect_performance_problems
+from sentry.utils.performance_issues.performance_detection import (
+    PerformanceProblem,
+    detect_performance_problems,
+)
 from sentry.utils.safe import get_path, safe_execute, setdefault_path, trim
 
 logger = logging.getLogger("sentry.events")
@@ -1911,7 +1914,7 @@ def _save_aggregate_performance(jobs, projects):
     MAX_GROUPS = (
         10  # safety check in case we are passed too many. constant will live somewhere else tbd
     )
-    for job in jobs[:MAX_GROUPS]:
+    for job in jobs:
         # FEATURE FLAG RANDOMIZER
         # check options to see if we should be creating performance issues for this org
 
@@ -1921,8 +1924,12 @@ def _save_aggregate_performance(jobs, projects):
 
             kwargs = _create_kwargs(job)
 
-            # TODO: get fingerprint
-            existing_grouphashes = job.get("fingerprints", [])
+            # List[PerformanceProblem]
+            performance_problems = job.get("performance_problems")
+            all_group_hashes = [problem["fingerprint"] for problem in performance_problems]
+            group_hashes = all_group_hashes[:MAX_GROUPS]
+
+            existing_grouphashes = []
             event = job["event"]
             project = event.project
 
