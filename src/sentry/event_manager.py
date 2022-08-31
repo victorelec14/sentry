@@ -4,8 +4,10 @@ import logging
 import random
 import re
 import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from io import BytesIO
+from typing import TypedDict
 
 import sentry_sdk
 from django.conf import settings
@@ -98,6 +100,7 @@ from sentry.utils.performance_issues.performance_detection import (
     detect_performance_problems,
 )
 from sentry.utils.safe import get_path, safe_execute, setdefault_path, trim
+from sentry.utils.types import Sequence
 
 logger = logging.getLogger("sentry.events")
 
@@ -1907,8 +1910,19 @@ def _detect_performance_problems(jobs, projects):
         job["performance_problems"] = detect_performance_problems(job["data"])
 
 
+@dataclass
+class GroupInfo:
+    group: Group
+    is_new: bool
+    is_regression: bool
+
+
+class Performance_Job(TypedDict, total=False):
+    performance_problems: Sequence[PerformanceProblem]
+
+
 @metrics.wraps("save_event.save_aggregate_performance")
-def _save_aggregate_performance(jobs, projects):
+def _save_aggregate_performance(jobs: Sequence[Performance_Job], projects):
 
     # TODO: batch operations (like rate limiting) so we don't repeat for each job
     MAX_GROUPS = (
@@ -1924,68 +1938,65 @@ def _save_aggregate_performance(jobs, projects):
 
             kwargs = _create_kwargs(job)
 
-            # List[PerformanceProblem]
-            performance_problems = job.get("performance_problems")
+            performance_problems = job["performance_problems"]
             all_group_hashes = [problem["fingerprint"] for problem in performance_problems]
             group_hashes = all_group_hashes[:MAX_GROUPS]
 
             event = job["event"]
             project = event.project
 
-            existing_grouphashes = GroupHash.objects.get(project=project, hash=group_hashes)
+            existing_grouphashes = GroupHash.objects.filter(
+                project=project, hash__in=group_hashes
+            ).select_related("group")
 
-            new_grouphashes = set(group_hashes) - set(existing_grouphashes)
+            new_grouphashes = set(group_hashes) - {hash.hash for hash in existing_grouphashes}
 
             if new_grouphashes:
+                job["groups"] = []
+                for new_grouphash in new_grouphashes:
 
-                # GROUP DOES NOT EXIST
-                with sentry_sdk.start_span(
-                    op="event_manager.create_group_transaction"
-                ) as span, metrics.timer(
-                    "event_manager.create_group_transaction"
-                ) as metric_tags, transaction.atomic():
-                    span.set_tag("create_group_transaction.outcome", "no_group")
-                    metric_tags["create_group_transaction.outcome"] = "no_group"
+                    # GROUP DOES NOT EXIST
+                    with sentry_sdk.start_span(
+                        op="event_manager.create_group_transaction"
+                    ) as span, metrics.timer(
+                        "event_manager.create_group_transaction"
+                    ) as metric_tags, transaction.atomic():
+                        span.set_tag("create_group_transaction.outcome", "no_group")
+                        metric_tags["create_group_transaction.outcome"] = "no_group"
 
-                    # TODO: RATE LIMITER
-                    # ops team will give us a redis cluster, but told us to use the current one for now
-                    # below adapted from postgres_v2.py
-                    # from sentry.sentry_metrics.configuration import UseCaseKey
-                    # from sentry.sentry_metrics.indexer.base import KeyCollection
-                    # from sentry.sentry_metrics.indexer.ratelimiters import writes_limiter
-                    # with writes_limiter.check_write_limits(UseCaseKey("performance"), KeyCollection({job.organization.id: {job.organization.name}})) as writes_limiter_state:
-                    #     pass
+                        # TODO: RATE LIMITER
+                        # ops team will give us a redis cluster, but told us to use the current one for now
+                        # below adapted from postgres_v2.py
+                        # from sentry.sentry_metrics.configuration import UseCaseKey
+                        # from sentry.sentry_metrics.indexer.base import KeyCollection
+                        # from sentry.sentry_metrics.indexer.ratelimiters import writes_limiter
+                        # with writes_limiter.check_write_limits(UseCaseKey("performance"), KeyCollection({job.organization.id: {job.organization.name}})) as writes_limiter_state:
+                        #     pass
 
-                    # TODO how to pass new group hashes?
-                    group = _create_group(project, event, **kwargs)
+                        group = _create_group(project, event, **kwargs)
+                        GroupHash.objects.create(project, new_grouphash, group)
 
-                    is_new = True
-                    is_regression = False
+                        is_new = True
+                        is_regression = False
 
-                    span.set_tag("create_group_transaction.outcome", "new_group")
-                    metric_tags["create_group_transaction.outcome"] = "new_group"
+                        span.set_tag("create_group_transaction.outcome", "new_group")
+                        metric_tags["create_group_transaction.outcome"] = "new_group"
 
-                    metrics.incr(
-                        "group.created",
-                        skip_internal=True,
-                        tags={"platform": job["platform"] or "unknown"},
-                    )
+                        metrics.incr(
+                            "group.created",
+                            skip_internal=True,
+                            tags={"platform": job["platform"] or "unknown"},
+                        )
 
-                    job["group"] = group
-                    job["event"].group = job["group"]
-                    job["is_new"] = is_new
-                    job["is_regression"] = is_regression
-                    # continue
+                        job["groups"].append(
+                            GroupInfo(group=group, is_new=is_new, is_regression=is_regression)
+                        )
 
             if existing_grouphashes:
 
                 # GROUP EXISTS
                 for existing_grouphash in existing_grouphashes:
-                    existing_grouphash_object = GroupHash.objects.get(
-                        project=project, hash=existing_grouphash
-                    )
-
-                    group = Group.objects.filter(id=existing_grouphash_object.group_id)
+                    group = existing_grouphash.group
 
                     is_new = False
 
@@ -1993,12 +2004,11 @@ def _save_aggregate_performance(jobs, projects):
                         group=group, event=job["event"], data=kwargs, release=job["release"]
                     )
 
-                    # TODO: make groups array
-                    # return group IDs we've associated with the transaction
-                    job["group"] = group
-                    job["event"].group = job["group"]
-                    job["is_new"] = is_new
-                    job["is_regression"] = is_regression
+                    job["groups"].append(
+                        GroupInfo(group=group, is_new=is_new, is_regression=is_regression)
+                    )
+
+            job["event"].group_ids = [groupInfo.group.id for groupInfo in job["groups"]]
 
 
 @metrics.wraps("event_manager.save_transaction_events")
