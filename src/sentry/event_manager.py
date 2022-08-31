@@ -1929,12 +1929,14 @@ def _save_aggregate_performance(jobs, projects):
             all_group_hashes = [problem["fingerprint"] for problem in performance_problems]
             group_hashes = all_group_hashes[:MAX_GROUPS]
 
-            existing_grouphashes = []
             event = job["event"]
             project = event.project
 
-            # use fingerprint to check if group exists
-            if not existing_grouphashes:
+            existing_grouphashes = GroupHash.objects.get(project=project, hash=group_hashes)
+
+            new_grouphashes = set(group_hashes) - set(existing_grouphashes)
+
+            if new_grouphashes:
 
                 # GROUP DOES NOT EXIST
                 with sentry_sdk.start_span(
@@ -1954,6 +1956,7 @@ def _save_aggregate_performance(jobs, projects):
                     # with writes_limiter.check_write_limits(UseCaseKey("performance"), KeyCollection({job.organization.id: {job.organization.name}})) as writes_limiter_state:
                     #     pass
 
+                    # TODO how to pass new group hashes?
                     group = _create_group(project, event, **kwargs)
 
                     is_new = True
@@ -1972,28 +1975,30 @@ def _save_aggregate_performance(jobs, projects):
                     job["event"].group = job["group"]
                     job["is_new"] = is_new
                     job["is_regression"] = is_regression
-                    continue
+                    # continue
 
-            # GROUP EXISTS
-            for existing_grouphash in existing_grouphashes:
-                existing_grouphash_object = GroupHash.objects.get(
-                    project=project, hash=existing_grouphash
-                )
+            if existing_grouphashes:
 
-                group = Group.objects.filter(id=existing_grouphash_object.group_id)
+                # GROUP EXISTS
+                for existing_grouphash in existing_grouphashes:
+                    existing_grouphash_object = GroupHash.objects.get(
+                        project=project, hash=existing_grouphash
+                    )
 
-                is_new = False
+                    group = Group.objects.filter(id=existing_grouphash_object.group_id)
 
-                is_regression = _process_existing_aggregate(
-                    group=group, event=job["event"], data=kwargs, release=job["release"]
-                )
+                    is_new = False
 
-                # TODO: make groups array
-                # return group IDs we've associated with the transaction
-                job["group"] = group
-                job["event"].group = job["group"]
-                job["is_new"] = is_new
-                job["is_regression"] = is_regression
+                    is_regression = _process_existing_aggregate(
+                        group=group, event=job["event"], data=kwargs, release=job["release"]
+                    )
+
+                    # TODO: make groups array
+                    # return group IDs we've associated with the transaction
+                    job["group"] = group
+                    job["event"].group = job["group"]
+                    job["is_new"] = is_new
+                    job["is_regression"] = is_regression
 
 
 @metrics.wraps("event_manager.save_transaction_events")
