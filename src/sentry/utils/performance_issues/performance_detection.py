@@ -147,7 +147,7 @@ def _detect_performance_problems(data: Event, sdk_span: Any) -> List[Performance
     }
 
     # Create performance issues for duplicate spans first
-    used_perf_issue_detectors = {DetectorType.DUPLICATE_SPANS_HASH, DetectorType.DUPLICATE_SPANS}
+    used_perf_issue_detectors = {DetectorType.DUPLICATE_SPANS_HASH}
 
     for span in spans:
         for _, detector in detectors.items():
