@@ -107,6 +107,7 @@ export enum FieldValueType {
   PERCENTAGE = 'percentage',
   STRING = 'string',
   NEVER = 'never',
+  SIZE = 'size',
 }
 
 export enum WebVital {
@@ -170,10 +171,6 @@ export enum AggregationKey {
 export interface FieldDefinition {
   kind: FieldKind;
   valueType: FieldValueType | null;
-  /**
-   * Allow operators (<, <=, >, >=, etc.) in the query with text value.
-   */
-  allowTextOperators?: boolean;
   deprecated?: boolean;
   desc?: string;
   keywords?: string[];
@@ -674,25 +671,21 @@ export const FIELDS: Record<FieldKey & AggregationKey & MobileVital, FieldDefini
     desc: t('The full version number that identifies the iteration'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.STRING,
-    allowTextOperators: true,
   },
   [FieldKey.RELEASE_PACKAGE]: {
     desc: t('The identifier unique to the project or application'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.STRING,
-    allowTextOperators: true,
   },
   [FieldKey.RELEASE_STAGE]: {
     desc: t('Stage of usage (i.e., adopted, replaced, low)'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.STRING,
-    allowTextOperators: true,
   },
   [FieldKey.RELEASE_VERSION]: {
     desc: t('An abbreviated version number of the build'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.STRING,
-    allowTextOperators: true,
   },
   [FieldKey.SDK_NAME]: {
     desc: t('Name of the platform that sent the event'),
@@ -766,12 +759,12 @@ export const FIELDS: Record<FieldKey & AggregationKey & MobileVital, FieldDefini
     valueType: FieldValueType.DATE,
   },
   [FieldKey.TIMESTAMP_TO_HOUR]: {
-    desc: t('Rounded down to the nearest day'),
+    desc: t('Rounded down to the nearest hour'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.DATE,
   },
   [FieldKey.TIMESTAMP_TO_DAY]: {
-    desc: t('Rounded down to the nearest hour'),
+    desc: t('Rounded down to the nearest day'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.DATE,
   },
@@ -791,7 +784,7 @@ export const FIELDS: Record<FieldKey & AggregationKey & MobileVital, FieldDefini
     valueType: FieldValueType.STRING,
   },
   [FieldKey.TRACE_SPAN]: {
-    desc: t('Span identification number of the root span t('),
+    desc: t('Span identification number of the root span'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.STRING,
   },
@@ -801,17 +794,17 @@ export const FIELDS: Record<FieldKey & AggregationKey & MobileVital, FieldDefini
     valueType: FieldValueType.STRING,
   },
   [FieldKey.TRANSACTION_OP]: {
-    desc: t('The trace identification number'),
+    desc: t('Short code identifying the type of operation the span is measuring'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.STRING,
   },
   [FieldKey.TRANSACTION_DURATION]: {
-    desc: t('Span identification number of the parent to the event'),
+    desc: t('Duration, in milliseconds, of the transaction'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.DURATION,
   },
   [FieldKey.TRANSACTION_STATUS]: {
-    desc: t('Span identification number of the root span'),
+    desc: t('Describes the status of the span/transaction'),
     kind: FieldKind.FIELD,
     valueType: FieldValueType.STRING,
   },
