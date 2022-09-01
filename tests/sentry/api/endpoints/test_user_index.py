@@ -1,7 +1,9 @@
 from sentry.models import UserPermission
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import customer_silo_test
 
 
+@customer_silo_test
 class UserListTest(APITestCase):
     endpoint = "sentry-api-0-user-index"
 

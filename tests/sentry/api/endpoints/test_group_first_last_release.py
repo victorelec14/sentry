@@ -1,6 +1,8 @@
 from sentry.testutils import APITestCase, SnubaTestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class GroupFirstLastTest(APITestCase, SnubaTestCase):
     def test_simple(self):
         self.login_as(user=self.user)

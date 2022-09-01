@@ -1,7 +1,9 @@
 from sentry.models import Rule
 from sentry.testutils import AcceptanceTestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class ProjectAlertSettingsTest(AcceptanceTestCase):
     def setUp(self):
         super().setUp()

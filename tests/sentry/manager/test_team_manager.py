@@ -1,7 +1,9 @@
 from sentry.models import Team, User
 from sentry.testutils import TestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class TeamManagerTest(TestCase):
     def test_simple(self):
         user = User.objects.create(username="foo")

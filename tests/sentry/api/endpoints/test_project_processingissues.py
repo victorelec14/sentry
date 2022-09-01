@@ -5,8 +5,10 @@ from django.utils import timezone
 
 from sentry.models import EventError, EventProcessingIssue, ProcessingIssue, RawEvent
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class ProjectProjectProcessingIssuesTest(APITestCase):
     def test_simple(self):
         self.login_as(user=self.user)

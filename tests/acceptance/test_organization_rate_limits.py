@@ -3,8 +3,10 @@ from unittest.mock import Mock, patch
 from django.utils import timezone
 
 from sentry.testutils import AcceptanceTestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class OrganizationRateLimitsTest(AcceptanceTestCase):
     def setUp(self):
         super().setUp()

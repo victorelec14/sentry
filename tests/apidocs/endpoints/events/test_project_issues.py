@@ -1,8 +1,10 @@
 from django.test.client import RequestFactory
 
 from fixtures.apidocs_test_case import APIDocsTestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class ProjectIssuesDocs(APIDocsTestCase):
     def setUp(self):
         self.create_event("a")

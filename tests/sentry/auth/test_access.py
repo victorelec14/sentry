@@ -16,8 +16,10 @@ from sentry.models import (
 )
 from sentry.testutils import TestCase
 from sentry.testutils.helpers import with_feature
+from sentry.testutils.silo import customer_silo_test
 
 
+@customer_silo_test
 class FromUserTest(TestCase):
     def test_no_access(self):
         organization = self.create_organization()
@@ -576,6 +578,7 @@ class DefaultAccessTest(TestCase):
         assert not result.permissions
 
 
+@customer_silo_test
 class GetPermissionsForUserTest(TestCase):
     def test_combines_roles_and_perms(self):
         user = self.user

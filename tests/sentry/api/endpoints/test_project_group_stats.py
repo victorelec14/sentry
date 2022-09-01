@@ -1,7 +1,9 @@
 from sentry import tsdb
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class ProjectGroupStatsTest(APITestCase):
     def test_simple(self):
         self.login_as(user=self.user)

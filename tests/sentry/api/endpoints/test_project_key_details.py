@@ -2,8 +2,10 @@ from django.urls import reverse
 
 from sentry.models import ProjectKey, ProjectKeyStatus
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class UpdateProjectKeyTest(APITestCase):
     def test_simple(self):
         project = self.create_project()
@@ -115,6 +117,7 @@ class UpdateProjectKeyTest(APITestCase):
         assert key.status == ProjectKeyStatus.INACTIVE
 
 
+@control_silo_test
 class DeleteProjectKeyTest(APITestCase):
     def test_simple(self):
         project = self.create_project()

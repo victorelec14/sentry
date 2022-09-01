@@ -13,9 +13,11 @@ from sentry.models import (
     OrganizationIntegration,
 )
 from sentry.testutils import TestCase
+from sentry.testutils.silo import control_silo_test
 from sentry.types.activity import ActivityType
 
 
+@control_silo_test
 class GroupAssigneeTestCase(TestCase):
     def test_constraints(self):
         # Can't both be assigned

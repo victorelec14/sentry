@@ -2,8 +2,10 @@ from django.urls import reverse
 
 from sentry.testutils import OrganizationDashboardWidgetTestCase
 from sentry.testutils.helpers.datetime import before_now, iso_format
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class OrganizationDashboardWidgetDetailsTestCase(OrganizationDashboardWidgetTestCase):
     def url(self):
         return reverse(

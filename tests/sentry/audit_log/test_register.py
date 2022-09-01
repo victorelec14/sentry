@@ -1,7 +1,9 @@
 from sentry import audit_log
 from sentry.testutils import TestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class AuditLogEventRegisterTest(TestCase):
     def test_get_api_names(self):
         audit_log_api_name_list = [

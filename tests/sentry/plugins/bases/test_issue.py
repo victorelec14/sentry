@@ -5,9 +5,11 @@ import pytest
 from sentry.models import User
 from sentry.plugins.bases.issue import IssueTrackingPlugin
 from sentry.testutils import TestCase
+from sentry.testutils.silo import customer_silo_test
 from social_auth.models import UserSocialAuth
 
 
+@customer_silo_test
 class GetAuthForUserTest(TestCase):
     def _get_mock_user(self):
         user = mock.Mock(spec=User(id=1))

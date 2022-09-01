@@ -1,7 +1,9 @@
 from sentry.models import AuthIdentity, AuthProvider
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import customer_silo_test
 
 
+@customer_silo_test
 class DeleteUserIdentityTest(APITestCase):
     endpoint = "sentry-api-0-user-identity-details"
     method = "delete"

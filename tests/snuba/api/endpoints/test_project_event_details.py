@@ -2,8 +2,10 @@ from django.urls import reverse
 
 from sentry.testutils import APITestCase, SnubaTestCase
 from sentry.testutils.helpers.datetime import before_now, iso_format
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class ProjectEventDetailsTest(APITestCase, SnubaTestCase):
     def setUp(self):
         super().setUp()
@@ -115,6 +117,7 @@ class ProjectEventDetailsTest(APITestCase, SnubaTestCase):
         assert response.data["nextEventID"] is None
 
 
+@control_silo_test
 class ProjectEventJsonEndpointTest(APITestCase, SnubaTestCase):
     def setUp(self):
         super().setUp()

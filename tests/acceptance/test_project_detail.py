@@ -2,10 +2,12 @@ from django.utils import timezone
 
 from sentry.incidents.models import IncidentStatus
 from sentry.testutils import AcceptanceTestCase
+from sentry.testutils.silo import control_silo_test
 
 FEATURE_NAME = ["organizations:incidents"]
 
 
+@control_silo_test
 class ProjectDetailTest(AcceptanceTestCase):
     def setUp(self):
         super().setUp()

@@ -1,7 +1,9 @@
 from sentry.rules.conditions.every_event import EveryEventCondition
 from sentry.testutils.cases import RuleTestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class EveryEventConditionTest(RuleTestCase):
     rule_cls = EveryEventCondition
 

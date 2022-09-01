@@ -3,8 +3,10 @@ from unittest.mock import patch
 from django.urls import reverse
 
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import customer_silo_test
 
 
+@customer_silo_test
 class AuthLoginEndpointTest(APITestCase):
     endpoint = "sentry-api-0-auth-login"
     method = "post"

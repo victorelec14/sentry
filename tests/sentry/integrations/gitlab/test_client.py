@@ -8,6 +8,7 @@ from fixtures.gitlab import GET_COMMIT_RESPONSE, GitLabTestCase
 from sentry.auth.exceptions import IdentityNotValid
 from sentry.models import Identity
 from sentry.shared_integrations.exceptions import ApiError
+from sentry.testutils.silo import customer_silo_test
 from sentry.utils import json
 
 GITLAB_CODEOWNERS = {
@@ -17,6 +18,7 @@ GITLAB_CODEOWNERS = {
 }
 
 
+@customer_silo_test
 class GitlabRefreshAuthTest(GitLabTestCase):
     get_user_should_succeed = True
 

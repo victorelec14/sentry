@@ -12,11 +12,13 @@ from sentry import newsletter, options
 from sentry.auth.authenticators import RecoveryCodeInterface, TotpInterface
 from sentry.models import OrganizationMember, User
 from sentry.testutils import TestCase
+from sentry.testutils.silo import customer_silo_test
 from sentry.utils import json
 from sentry.utils.client_state import get_client_state_key, get_redis_client
 
 
 # TODO(dcramer): need tests for SSO behavior and single org behavior
+@customer_silo_test
 class AuthLoginTest(TestCase):
     @fixture
     def path(self):
@@ -307,6 +309,7 @@ class AuthLoginTest(TestCase):
     settings.SENTRY_NEWSLETTER != "sentry.newsletter.dummy.DummyNewsletter",
     reason="Requires DummyNewsletter.",
 )
+@customer_silo_test
 class AuthLoginNewsletterTest(TestCase):
     @fixture
     def path(self):
@@ -392,6 +395,7 @@ def provision_middleware():
     return middleware
 
 
+@customer_silo_test
 class AuthLoginCustomerDomainTest(TestCase):
     @fixture
     def path(self):

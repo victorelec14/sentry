@@ -4,8 +4,10 @@ from django.urls import reverse
 
 from sentry.integrations.slack.utils import RedisRuleStatus
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class ProjectAlertRuleTaskDetailsTest(APITestCase):
     def setUp(self):
         self.login_as(user=self.user)

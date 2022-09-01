@@ -19,8 +19,10 @@ from sentry.models import (
     Repository,
 )
 from sentry.testutils import APITestCase, ReleaseCommitPatchTest, TestCase
+from sentry.testutils.silo import control_silo_test
 
 
+@control_silo_test
 class ProjectReleaseListTest(APITestCase):
     def test_simple(self):
         self.login_as(user=self.user)
@@ -110,6 +112,7 @@ class ProjectReleaseListTest(APITestCase):
         assert len(response.data) == 1
 
 
+@control_silo_test
 class ProjectReleaseListEnvironmentsTest(APITestCase):
     def setUp(self):
         self.login_as(user=self.user)
@@ -311,6 +314,7 @@ class ProjectReleaseListEnvironmentsTest(APITestCase):
         )
 
 
+@control_silo_test
 class ProjectReleaseCreateTest(APITestCase):
     def test_minimal(self):
         self.login_as(user=self.user)
@@ -476,6 +480,7 @@ class ProjectReleaseCreateTest(APITestCase):
             assert rc.organization_id
 
 
+@control_silo_test
 class ProjectReleaseCreateCommitPatch(ReleaseCommitPatchTest):
     @fixture
     def url(self):

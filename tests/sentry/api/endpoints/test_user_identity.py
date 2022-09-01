@@ -1,7 +1,9 @@
 from sentry.models import Identity, IdentityProvider, IdentityStatus
 from sentry.testutils import APITestCase
+from sentry.testutils.silo import customer_silo_test
 
 
+@customer_silo_test
 class UserIdentityTest(APITestCase):
     endpoint = "sentry-api-0-user-identity"
     method = "get"

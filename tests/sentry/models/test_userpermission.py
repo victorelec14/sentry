@@ -1,7 +1,9 @@
 from sentry.models import UserPermission
 from sentry.testutils import TestCase
+from sentry.testutils.silo import customer_silo_test
 
 
+@customer_silo_test
 class UserPermissionTest(TestCase):
     def test_for_user(self):
         user = self.create_user(email="a@example.com")

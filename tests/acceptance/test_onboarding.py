@@ -4,9 +4,11 @@ from selenium.common.exceptions import TimeoutException
 
 from sentry.models import Project
 from sentry.testutils import AcceptanceTestCase
+from sentry.testutils.silo import control_silo_test
 from sentry.utils.retries import TimedRetryPolicy
 
 
+@control_silo_test
 class OrganizationOnboardingTest(AcceptanceTestCase):
     def setUp(self):
         super().setUp()
